@@ -69,18 +69,39 @@ class HBNBCommand(cmd.Cmd):
         print("")
         return True
 
-    def do_create(self, arg):
-        """Usage: create <class>
-        Create a new class instance and print its id.
+    def do_create(self, my_line):
+        """Usage: create <class> <key 1>=<value 2> <key 2>=<value 2> ...
+        Create a new class instance with given keys/values and print its id.
         """
-        abc_arg = parse(arg)
-        if len(abc_arg) == 0:
-            print("** missing a class name **")
-        elif abc_arg[0] not in HBNBCommand.__classes:
-            print("** the class name doesn't exist **")
+    try:
+        if not my_line:
+            raise SyntaxError()
+        array_list = my_line.split(" ")
+
+        kwargs = {}
+        for i in range(1, len(array_list)):
+            key, value = tuple(array_list[i].split("="))
+            if value[0] == '"':
+                value = value.strip('"').replace("_", " ")
+            else:
+                try:
+                    value = eval(value)
+                except (SyntaxError, NameError):
+                    continue
+            kwargs[key] = value
+
+        if kwargs == {}:
+            my_obj = eval(array_list[0])()
         else:
-            print(eval(abc_arg[0])().id)
-            storage.save()
+            my_obj = eval(array_list[0])(**kwargs)
+            storage.new(my_obj)
+        print(my_obj.id)
+        my_obj.save()
+
+    except SyntaxError:
+        print("** missing a class name **")
+    except NameError:
+        print("** the class doesn't exist **")
 
     def do_show(self, arg):
         """Usage: show <class> <id> or <class>.show(<id>)
